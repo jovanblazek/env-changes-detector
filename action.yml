@@ -20,10 +20,6 @@ inputs:
   #   description: "Files to check for changes. Use glob pattern. e.g. '**.env.example'"
   #   required: true
 
-defaults:
-  run:
-    shell: bash
-
 runs:
   using: "composite"
   steps: 
@@ -41,6 +37,7 @@ runs:
         GITHUB_AUTH: ${{ inputs.repo-token }}
       run: |
         node dist/index.js
+      shell: bash
     - name: Add or update sticky comment
       uses: marocchino/sticky-pull-request-comment@v2.2.0
       with:
