@@ -2,7 +2,7 @@ import * as core from "@actions/core";
 import { promisify } from "util";
 import { exec } from "child_process";
 
-const getEnvFileChanges = async () => {
+async function run() {
 	try {
 		const token = core.getInput('repo-token')
 		const sourceBranch = core.getInput('source-branch')
@@ -48,10 +48,10 @@ const getEnvFileChanges = async () => {
 			`## Detected changes in env files:\n\n${result}`
 		);
 	} catch (error: any) {
+		console.log(error);
+		
 		core.setFailed(error);
 	}
 };
 
-module.exports = {
-	getEnvFileChanges,
-};
+run()
