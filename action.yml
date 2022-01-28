@@ -1,0 +1,45 @@
+name: "detect-env-file-changes"
+description: "Check for changes in the files with environment variables."
+author: "Jovan Blazek"
+icon: "message-circle"
+color: "blue"
+inputs:
+  repo-token:
+    description: "The GITHUB_TOKEN secret"
+    required: false
+    default: '${{ github.token }}'
+  source-branch:
+    description: "Source branch"
+    required: false
+    default: '${{ github.event.pull_request.head.ref }}'
+  target-branch:
+    description: "Target branch"
+    required: false
+    default: '${{ github.event.pull_request.base.ref }}'
+  # files:
+  #   description: "Files to check for changes. Use glob pattern. e.g. '**.env.example'"
+  #   required: true
+
+runs:
+  using: "composite"
+  steps: 
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - uses: actions/setup-node@v2.5.1
+      with:
+        node-version: "16.12.0"
+
+    - name: Detect changes in env files
+      id: "detect-changes-in-env-files"
+      env:
+        GITHUB_AUTH: ${{ inputs.repo-token }}
+      run: |
+        node dist/index.js
+    - name: Add or update sticky comment
+      uses: marocchino/sticky-pull-request-comment@v2.2.0
+      with:
+        message: |
+          ${{ steps.detect-changes-in-env-files.outputs.ENV_CHANGES }}
+        GITHUB_TOKEN: ${{ inputs.repo-token }} 
