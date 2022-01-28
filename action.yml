@@ -20,6 +20,10 @@ inputs:
   #   description: "Files to check for changes. Use glob pattern. e.g. '**.env.example'"
   #   required: true
 
+defaults:
+  run:
+    shell: bash
+
 runs:
   using: "composite"
   steps: 
