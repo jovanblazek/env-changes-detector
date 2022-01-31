@@ -1595,16 +1595,13 @@ const child_process_1 = __nccwpck_require__(81);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const token = core.getInput("repo-token");
-            const sourceBranch = core.getInput("source-branch");
             const targetBranch = core.getInput("target-branch");
-            console.log(sourceBranch, targetBranch);
-            console.log(token);
             const diffResult = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w origin/${targetBranch} -- '**.env-example' '**.env-test-example'`);
             if (diffResult.stderr) {
                 throw new Error(diffResult.stderr);
             }
             if (diffResult.stdout === "") {
+                console.log('Did not find any changes');
                 core.setOutput("env-changes-detected", false);
                 core.setOutput("env-changes-raw", []);
                 core.setOutput("env-changes-md", "No env file changes detected.");
@@ -1630,6 +1627,7 @@ function run() {
                 return `\`\`\` diff\n${match}\n`;
             })
                 .join("\n");
+            console.log(result);
             core.setOutput("env-changes-detected", true);
             core.setOutput("env-changes-raw", matches);
             core.setOutput("env-changes-md", `## Detected changes in env files:\n\n${result}`);
