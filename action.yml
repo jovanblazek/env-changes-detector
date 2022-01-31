@@ -4,14 +4,6 @@ author: "Jovan Blazek"
 icon: "message-circle"
 color: "blue"
 inputs:
-  repo-token:
-    description: "The GITHUB_TOKEN secret"
-    required: false
-    default: '${{ github.token }}'
-  source-branch:
-    description: "Source branch"
-    required: false
-    default: '${{ github.event.pull_request.head.ref }}'
   target-branch:
     description: "Target branch"
     required: false
@@ -19,6 +11,13 @@ inputs:
   # files:
   #   description: "Files to check for changes. Use glob pattern. e.g. '**.env.example'"
   #   required: true
+outputs:
+  env-changes-detected:
+    description: "Boolean value indicating if specified files have been changed"
+  env-changes-raw:
+    description: "Raw output of changes"
+  env-changes-md:
+    description: "Markdown output of changes"
 
 runs:
   using: 'node16'

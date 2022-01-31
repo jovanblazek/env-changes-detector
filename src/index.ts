@@ -4,12 +4,7 @@ import { exec } from "child_process";
 
 async function run() {
 	try {
-		const token = core.getInput("repo-token");
-		const sourceBranch = core.getInput("source-branch");
 		const targetBranch = core.getInput("target-branch");
-
-		console.log(sourceBranch, targetBranch);
-		console.log(token);
 
 		const diffResult = await promisify(exec)(
 			`git diff -w origin/${targetBranch} -- '**.env-example' '**.env-test-example'`
@@ -19,6 +14,8 @@ async function run() {
 		}
 
 		if (diffResult.stdout === "") {
+			console.log('Did not find any changes');
+			
 			core.setOutput("env-changes-detected", false);
 			core.setOutput("env-changes-raw", []);
 			core.setOutput("env-changes-md", "No env file changes detected.");
@@ -52,6 +49,8 @@ async function run() {
 			})
 			.join("\n");
 
+		console.log(result);
+		
 		core.setOutput("env-changes-detected", true);
 		core.setOutput("env-changes-raw", matches);
 		core.setOutput(
