@@ -9,22 +9,13 @@ const MD_OUTPUT = 'env-changes-md'
 async function run() {
   try {
     const targetBranch = core.getInput('target-branch')
-    const filesToCheck = core.getInput('files')
+    const filesToCheck: string[] = JSON.parse(core.getInput('files'))
     core.setOutput(HAS_DETECTED_CHANGES, false)
     core.setOutput(RAW_OUTPUT, [])
     core.setOutput(MD_OUTPUT, 'No env file changes detected.')
 
-    if (Array.isArray(filesToCheck)) {
-      console.log('its an array', typeof filesToCheck)
-      console.log(filesToCheck)
-    } else {
-      console.log('not an array', typeof filesToCheck)
-      console.log(filesToCheck)
-      console.log('parsed', JSON.parse(filesToCheck))
-    }
-
     const diffResult = await promisify(exec)(
-      `git diff -w origin/${targetBranch} -- '**.env.example' '**.env-test-example'`
+      `git diff -w origin/${targetBranch} -- ${filesToCheck.map((file)=> `'${file}'`).join(' ')}`
     )
     if (diffResult.stderr) {
       throw new Error(diffResult.stderr)

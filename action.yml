@@ -1,15 +1,15 @@
 name: "detect-env-file-changes"
-description: "Check for changes in the files with environment variables."
+description: "Check for changes in the files with environment variables"
 author: "Jovan Blazek"
 icon: "message-circle"
 color: "blue"
 inputs:
   target-branch:
-    description: "Target branch"
+    description: "Target branch to compare against"
     required: false
     default: '${{ github.event.pull_request.base.ref }}'
   files:
-    description: "Files to check for changes. Use glob pattern. e.g. '**.env.example'"
+    description: "Files to check for changes. Check README for details on format"
     required: false
     default: '["**.env.example", "**.env-test-example"]'
 outputs:
