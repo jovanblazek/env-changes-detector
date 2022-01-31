@@ -1598,42 +1598,37 @@ const MD_OUTPUT = 'env-changes-md';
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const targetBranch = core.getInput("target-branch");
+            const targetBranch = core.getInput('target-branch');
             core.setOutput(HAS_DETECTED_CHANGES, false);
             core.setOutput(RAW_OUTPUT, []);
-            core.setOutput(MD_OUTPUT, "No env file changes detected.");
+            core.setOutput(MD_OUTPUT, 'No env file changes detected.');
             const diffResult = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w origin/${targetBranch} -- '**.env.example' '**.env-test-example'`);
             if (diffResult.stderr) {
                 throw new Error(diffResult.stderr);
             }
-            if (diffResult.stdout === "") {
-                console.log('Did not find any changes');
+            if (diffResult.stdout === '') {
                 return;
             }
             const regex = /^(?<diff>[\+-]{1}\w.*)|(?:diff --git\sa(?<file>.*?)\s.*)$/gm;
-            const matches = Array.from(diffResult.stdout.matchAll(regex), (match) => match.groups && (match.groups.file || match.groups.diff)).filter((match) => match !== undefined);
+            const matches = Array.from(diffResult.stdout.matchAll(regex), (match) => match.groups);
             // format found changes to markdown syntax
-            const result = matches
-                .map((match, index) => {
-                // file name
-                if (match[0] === "/") {
+            const markdownMessage = matches.map((match, index) => {
+                if (match.file) {
                     if (index === 0) {
-                        return `\`${match}\`\n`;
+                        return `\`${match.file}\`\n`;
                     }
-                    return `\`\`\`\n\`${match}\`\n`;
+                    return `\`\`\`\n\`${match.file}\`\n`;
                 }
-                // diff
                 const previousMatch = matches[index - 1];
-                if (previousMatch[0] === "+" || previousMatch[0] === "-") {
-                    return `${match}\n`;
+                if (previousMatch.diff) {
+                    return `${match.diff}\n`;
                 }
-                return `\`\`\` diff\n${match}\n`;
-            })
-                .join("\n");
-            console.log(result);
+                return `\`\`\` diff\n${match.diff}\n`;
+            });
+            markdownMessage.push('```'); // close last code block
             core.setOutput(HAS_DETECTED_CHANGES, true);
             core.setOutput(RAW_OUTPUT, matches);
-            core.setOutput(MD_OUTPUT, `## Detected changes in env files:\n\n${result}`);
+            core.setOutput(MD_OUTPUT, `## Detected changes in env files:\n\n${markdownMessage.join('\n')}`);
         }
         catch (error) {
             console.log(error);
