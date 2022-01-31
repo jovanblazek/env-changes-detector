@@ -11,7 +11,7 @@ inputs:
   files:
     description: "Files to check for changes. Use glob pattern. e.g. '**.env.example'"
     required: false
-    default: "['**.env.example', '**.env-test-example']"
+    default: '["**.env.example", "**.env-test-example"]'
 outputs:
   env-changes-detected:
     description: "Boolean value indicating if specified files have been changed"

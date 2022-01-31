@@ -14,16 +14,14 @@ async function run() {
     core.setOutput(RAW_OUTPUT, [])
     core.setOutput(MD_OUTPUT, 'No env file changes detected.')
 
-		if(Array.isArray(filesToCheck)){
-			console.log('its an array', typeof filesToCheck);
-			console.log(filesToCheck);
-			
-		}
-		else { 
-			console.log('not an array', typeof filesToCheck);
-			console.log(filesToCheck);
-		}
-		
+    if (Array.isArray(filesToCheck)) {
+      console.log('its an array', typeof filesToCheck)
+      console.log(filesToCheck)
+    } else {
+      console.log('not an array', typeof filesToCheck)
+      console.log(filesToCheck)
+      console.log('parsed', JSON.parse(filesToCheck))
+    }
 
     const diffResult = await promisify(exec)(
       `git diff -w origin/${targetBranch} -- '**.env.example' '**.env-test-example'`
