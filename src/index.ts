@@ -44,7 +44,7 @@ async function run() {
       }
       return `\`\`\` diff\n${match.diff}\n`
     })
-    markdownMessage.push('```') // close last code block
+    markdownMessage.push(`\`\`\``) // close last code block
 
     core.setOutput(HAS_DETECTED_CHANGES, true)
     core.setOutput(RAW_OUTPUT, matches)
