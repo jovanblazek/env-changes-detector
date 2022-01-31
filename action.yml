@@ -21,22 +21,5 @@ inputs:
   #   required: true
 
 runs:
-  using: "composite"
-  steps: 
-    - uses: actions/setup-node@v2.5.1
-      with:
-        node-version: "16.12.0"
-
-    - name: Detect changes in env files
-      id: "detect-changes-in-env-files"
-      env:
-        GITHUB_AUTH: ${{ inputs.repo-token }}
-      run: |
-        node dist/index.js
-      shell: bash
-    - name: Add or update sticky comment
-      uses: marocchino/sticky-pull-request-comment@v2.2.0
-      with:
-        message: |
-          ${{ steps.detect-changes-in-env-files.outputs.ENV_CHANGES }}
-        GITHUB_TOKEN: ${{ inputs.repo-token }} 
+  using: 'node16'
+  main: 'dist/index.js'

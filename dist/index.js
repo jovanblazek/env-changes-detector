@@ -1595,9 +1595,9 @@ const child_process_1 = __nccwpck_require__(81);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const token = core.getInput('repo-token');
-            const sourceBranch = core.getInput('source-branch');
-            const targetBranch = core.getInput('target-branch');
+            const token = core.getInput("repo-token");
+            const sourceBranch = core.getInput("source-branch");
+            const targetBranch = core.getInput("target-branch");
             console.log(sourceBranch, targetBranch);
             console.log(token);
             const diffResult = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w origin/${targetBranch} -- '**.env-example' '**.env-test-example'`);
@@ -1605,24 +1605,34 @@ function run() {
                 throw new Error(diffResult.stderr);
             }
             if (diffResult.stdout === "") {
-                core.setOutput("ENV_CHANGES", "No env file changes detected.");
+                core.setOutput("env-changes-detected", false);
+                core.setOutput("env-changes-raw", []);
+                core.setOutput("env-changes-md", "No env file changes detected.");
                 return;
             }
-            const parsedDiffArray = diffResult.stdout
-                .split("diff --git ")
-                .slice(1)
-                .map((line) => line.split("\n"));
-            const filteredDiff = parsedDiffArray.map((item) => ({
-                filePath: item[0].slice(1).split(" ")[0],
-                diff: item
-                    .filter((line) => line[0] === "+" || line[0] === "-")
-                    .slice(2)
-                    .join("\n"),
-            }));
-            const result = filteredDiff
-                .map(({ filePath, diff }) => `\`${filePath}\`\n\`\`\` diff\n${diff}\n\`\`\``)
+            const regex = /^(?<diff>[\+-]{1}\w.*)|(?:diff --git\sa(?<file>.*?)\s.*)$/gm;
+            const matches = Array.from(diffResult.stdout.matchAll(regex), (match) => match.groups && (match.groups.file || match.groups.diff)).filter((match) => match !== undefined);
+            // format found changes to markdown syntax
+            const result = matches
+                .map((match, index) => {
+                // file name
+                if (match[0] === "/") {
+                    if (index === 0) {
+                        return `\`${match}\`\n`;
+                    }
+                    return `\`\`\`\n\`${match}\`\n`;
+                }
+                // diff
+                const previousMatch = matches[index - 1];
+                if (previousMatch[0] === "+" || previousMatch[0] === "-") {
+                    return `${match}\n`;
+                }
+                return `\`\`\` diff\n${match}\n`;
+            })
                 .join("\n");
-            core.setOutput("ENV_CHANGES", `## Detected changes in env files:\n\n${result}`);
+            core.setOutput("env-changes-detected", true);
+            core.setOutput("env-changes-raw", matches);
+            core.setOutput("env-changes-md", `## Detected changes in env files:\n\n${result}`);
         }
         catch (error) {
             console.log(error);
@@ -1630,7 +1640,6 @@ function run() {
         }
     });
 }
-;
 run();
 
 

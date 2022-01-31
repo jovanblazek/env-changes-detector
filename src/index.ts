@@ -4,12 +4,12 @@ import { exec } from "child_process";
 
 async function run() {
 	try {
-		const token = core.getInput('repo-token')
-		const sourceBranch = core.getInput('source-branch')
-		const targetBranch = core.getInput('target-branch')
+		const token = core.getInput("repo-token");
+		const sourceBranch = core.getInput("source-branch");
+		const targetBranch = core.getInput("target-branch");
 
 		console.log(sourceBranch, targetBranch);
-		console.log(token);	
+		console.log(token);
 
 		const diffResult = await promisify(exec)(
 			`git diff -w origin/${targetBranch} -- '**.env-example' '**.env-test-example'`
@@ -19,39 +19,49 @@ async function run() {
 		}
 
 		if (diffResult.stdout === "") {
-			core.setOutput("ENV_CHANGES", "No env file changes detected.");
+			core.setOutput("env-changes-detected", false);
+			core.setOutput("env-changes-raw", []);
+			core.setOutput("env-changes-md", "No env file changes detected.");
 			return;
 		}
 
-		const parsedDiffArray = diffResult.stdout
-			.split("diff --git ")
-			.slice(1)
-			.map((line) => line.split("\n"));
+		const regex =
+			/^(?<diff>[\+-]{1}\w.*)|(?:diff --git\sa(?<file>.*?)\s.*)$/gm;
+		const matches = Array.from(
+			diffResult.stdout.matchAll(regex),
+			(match) => match.groups && (match.groups.file || match.groups.diff)
+		).filter((match) => match !== undefined) as string[];
 
-		const filteredDiff = parsedDiffArray.map((item) => ({
-			filePath: item[0].slice(1).split(" ")[0],
-			diff: item
-				.filter((line) => line[0] === "+" || line[0] === "-")
-				.slice(2)
-				.join("\n"),
-		}));
+		// format found changes to markdown syntax
+		const result = matches
+			.map((match, index) => {
+				// file name
+				if (match[0] === "/") {
+					if (index === 0) {
+						return `\`${match}\`\n`;
+					}
+					return `\`\`\`\n\`${match}\`\n`;
+				}
 
-		const result = filteredDiff
-			.map(
-				({ filePath, diff }) =>
-					`\`${filePath}\`\n\`\`\` diff\n${diff}\n\`\`\``
-			)
+				// diff
+				const previousMatch = matches[index - 1];
+				if (previousMatch[0] === "+" || previousMatch[0] === "-") {
+					return `${match}\n`;
+				}
+				return `\`\`\` diff\n${match}\n`;
+			})
 			.join("\n");
 
+		core.setOutput("env-changes-detected", true);
+		core.setOutput("env-changes-raw", matches);
 		core.setOutput(
-			"ENV_CHANGES",
+			"env-changes-md",
 			`## Detected changes in env files:\n\n${result}`
 		);
 	} catch (error: any) {
 		console.log(error);
-		
 		core.setFailed(error);
 	}
-};
+}
 
-run()
+run();
