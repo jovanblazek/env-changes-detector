@@ -1610,6 +1610,7 @@ function run() {
             else {
                 console.log('not an array', typeof filesToCheck);
                 console.log(filesToCheck);
+                console.log('parsed', JSON.parse(filesToCheck));
             }
             const diffResult = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w origin/${targetBranch} -- '**.env.example' '**.env-test-example'`);
             if (diffResult.stderr) {
