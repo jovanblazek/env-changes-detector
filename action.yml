@@ -8,9 +8,10 @@ inputs:
     description: "Target branch"
     required: false
     default: '${{ github.event.pull_request.base.ref }}'
-  # files:
-  #   description: "Files to check for changes. Use glob pattern. e.g. '**.env.example'"
-  #   required: true
+  files:
+    description: "Files to check for changes. Use glob pattern. e.g. '**.env.example'"
+    required: false
+    default: "['**.env.example', '**.env-test-example']"
 outputs:
   env-changes-detected:
     description: "Boolean value indicating if specified files have been changed"
