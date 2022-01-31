@@ -2,12 +2,19 @@ import * as core from "@actions/core";
 import { promisify } from "util";
 import { exec } from "child_process";
 
+const HAS_DETECTED_CHANGES = 'env-changes-detected'
+const RAW_OUTPUT = 'env-changes-raw'
+const MD_OUTPUT = 'env-changes-md'
+
 async function run() {
 	try {
 		const targetBranch = core.getInput("target-branch");
+		core.setOutput(HAS_DETECTED_CHANGES, false);
+		core.setOutput(RAW_OUTPUT, []);
+		core.setOutput(MD_OUTPUT, "No env file changes detected.");
 
 		const diffResult = await promisify(exec)(
-			`git diff -w origin/${targetBranch} -- '**.env-example' '**.env-test-example'`
+			`git diff -w origin/${targetBranch} -- '**.env.example' '**.env-test-example'`
 		);
 		if (diffResult.stderr) {
 			throw new Error(diffResult.stderr);
@@ -15,10 +22,6 @@ async function run() {
 
 		if (diffResult.stdout === "") {
 			console.log('Did not find any changes');
-			
-			core.setOutput("env-changes-detected", false);
-			core.setOutput("env-changes-raw", []);
-			core.setOutput("env-changes-md", "No env file changes detected.");
 			return;
 		}
 
@@ -51,10 +54,10 @@ async function run() {
 
 		console.log(result);
 		
-		core.setOutput("env-changes-detected", true);
-		core.setOutput("env-changes-raw", matches);
+		core.setOutput(HAS_DETECTED_CHANGES, true);
+		core.setOutput(RAW_OUTPUT, matches);
 		core.setOutput(
-			"env-changes-md",
+			MD_OUTPUT,
 			`## Detected changes in env files:\n\n${result}`
 		);
 	} catch (error: any) {

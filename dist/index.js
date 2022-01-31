@@ -1592,19 +1592,22 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(186));
 const util_1 = __nccwpck_require__(837);
 const child_process_1 = __nccwpck_require__(81);
+const HAS_DETECTED_CHANGES = 'env-changes-detected';
+const RAW_OUTPUT = 'env-changes-raw';
+const MD_OUTPUT = 'env-changes-md';
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const targetBranch = core.getInput("target-branch");
-            const diffResult = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w origin/${targetBranch} -- '**.env-example' '**.env-test-example'`);
+            core.setOutput(HAS_DETECTED_CHANGES, false);
+            core.setOutput(RAW_OUTPUT, []);
+            core.setOutput(MD_OUTPUT, "No env file changes detected.");
+            const diffResult = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w origin/${targetBranch} -- '**.env.example' '**.env-test-example'`);
             if (diffResult.stderr) {
                 throw new Error(diffResult.stderr);
             }
             if (diffResult.stdout === "") {
                 console.log('Did not find any changes');
-                core.setOutput("env-changes-detected", false);
-                core.setOutput("env-changes-raw", []);
-                core.setOutput("env-changes-md", "No env file changes detected.");
                 return;
             }
             const regex = /^(?<diff>[\+-]{1}\w.*)|(?:diff --git\sa(?<file>.*?)\s.*)$/gm;
@@ -1628,9 +1631,9 @@ function run() {
             })
                 .join("\n");
             console.log(result);
-            core.setOutput("env-changes-detected", true);
-            core.setOutput("env-changes-raw", matches);
-            core.setOutput("env-changes-md", `## Detected changes in env files:\n\n${result}`);
+            core.setOutput(HAS_DETECTED_CHANGES, true);
+            core.setOutput(RAW_OUTPUT, matches);
+            core.setOutput(MD_OUTPUT, `## Detected changes in env files:\n\n${result}`);
         }
         catch (error) {
             console.log(error);
