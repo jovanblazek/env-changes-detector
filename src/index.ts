@@ -15,7 +15,9 @@ async function run() {
     core.setOutput(MD_OUTPUT, 'No env file changes detected.')
 
     const diffResult = await promisify(exec)(
-      `git diff -w origin/${targetBranch} -- ${filesToCheck.map((file)=> `'${file}'`).join(' ')}`
+      `git diff -w origin/${targetBranch} -- ${filesToCheck
+        .map((file) => `'${file}'`)
+        .join(' ')}`
     )
     if (diffResult.stderr) {
       throw new Error(diffResult.stderr)
@@ -54,7 +56,7 @@ async function run() {
       `## Detected changes in env files:\n\n${markdownMessage.join('\n')}`
     )
   } catch (error: any) {
-    console.log(error)
+    console.log('There was an error. Check your inputs and try again.')
     core.setFailed(error)
   }
 }

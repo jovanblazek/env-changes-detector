@@ -1603,7 +1603,9 @@ function run() {
             core.setOutput(HAS_DETECTED_CHANGES, false);
             core.setOutput(RAW_OUTPUT, []);
             core.setOutput(MD_OUTPUT, 'No env file changes detected.');
-            const diffResult = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w origin/${targetBranch} -- ${filesToCheck.map((file) => `'${file}'`).join(' ')}`);
+            const diffResult = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w origin/${targetBranch} -- ${filesToCheck
+                .map((file) => `'${file}'`)
+                .join(' ')}`);
             if (diffResult.stderr) {
                 throw new Error(diffResult.stderr);
             }
@@ -1632,7 +1634,7 @@ function run() {
             core.setOutput(MD_OUTPUT, `## Detected changes in env files:\n\n${markdownMessage.join('\n')}`);
         }
         catch (error) {
-            console.log(error);
+            console.log('There was an error. Check your inputs and try again.');
             core.setFailed(error);
         }
     });
