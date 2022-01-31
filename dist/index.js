@@ -1555,30 +1555,31 @@ exports.debug = debug; // for test
 
 /***/ }),
 
+/***/ 42:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MARKDOWN_MESSAGE = exports.OUTPUT = void 0;
+exports.OUTPUT = {
+    HAS_DETECTED_CHANGES: 'env-changes-detected',
+    RAW: 'env-changes-raw',
+    MARKDOWN: 'env-changes-md',
+};
+exports.MARKDOWN_MESSAGE = {
+    NO_CHANGES: 'No env file changes detected.',
+    CHANGES_DETECTED: '## Detected changes in env files:',
+};
+
+
+/***/ }),
+
 /***/ 144:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1589,20 +1590,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __importStar(__nccwpck_require__(186));
-const util_1 = __nccwpck_require__(837);
+const constants_1 = __nccwpck_require__(42);
+const core_1 = __nccwpck_require__(186);
 const child_process_1 = __nccwpck_require__(81);
-const HAS_DETECTED_CHANGES = 'env-changes-detected';
-const RAW_OUTPUT = 'env-changes-raw';
-const MD_OUTPUT = 'env-changes-md';
+const util_1 = __nccwpck_require__(837);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const targetBranch = core.getInput('target-branch');
-            const filesToCheck = JSON.parse(core.getInput('files'));
-            core.setOutput(HAS_DETECTED_CHANGES, false);
-            core.setOutput(RAW_OUTPUT, []);
-            core.setOutput(MD_OUTPUT, 'No env file changes detected.');
+            const targetBranch = (0, core_1.getInput)('target-branch');
+            const filesToCheck = JSON.parse((0, core_1.getInput)('files'));
+            (0, core_1.setOutput)(constants_1.OUTPUT.HAS_DETECTED_CHANGES, false);
+            (0, core_1.setOutput)(constants_1.OUTPUT.RAW, []);
+            (0, core_1.setOutput)(constants_1.OUTPUT.MARKDOWN, constants_1.MARKDOWN_MESSAGE.NO_CHANGES);
             const diffResult = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w origin/${targetBranch} -- ${filesToCheck
                 .map((file) => `'${file}'`)
                 .join(' ')}`);
@@ -1612,7 +1611,7 @@ function run() {
             if (diffResult.stdout === '') {
                 return;
             }
-            const regex = /^(?<diff>[\+-]{1}\w.*)|(?:diff --git\sa(?<file>.*?)\s.*)$/gm;
+            const regex = /^(?<diff>[+-]{1}\w.*)|(?:diff --git\sa(?<file>.*?)\s.*)$/gm;
             const matches = Array.from(diffResult.stdout.matchAll(regex), (match) => match.groups);
             // format found changes to markdown syntax
             const markdownMessage = matches.map((match, index) => {
@@ -1629,13 +1628,13 @@ function run() {
                 return `\`\`\` diff\n${match.diff}\n`;
             });
             markdownMessage.push(`\`\`\``); // close last code block
-            core.setOutput(HAS_DETECTED_CHANGES, true);
-            core.setOutput(RAW_OUTPUT, matches);
-            core.setOutput(MD_OUTPUT, `## Detected changes in env files:\n\n${markdownMessage.join('\n')}`);
+            (0, core_1.setOutput)(constants_1.OUTPUT.HAS_DETECTED_CHANGES, true);
+            (0, core_1.setOutput)(constants_1.OUTPUT.RAW, matches);
+            (0, core_1.setOutput)(constants_1.OUTPUT.MARKDOWN, `${constants_1.MARKDOWN_MESSAGE.CHANGES_DETECTED}\n\n${markdownMessage.join('\n')}`);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         }
         catch (error) {
-            console.log('There was an error. Check your inputs and try again.');
-            core.setFailed(error);
+            (0, core_1.setFailed)(error);
         }
     });
 }

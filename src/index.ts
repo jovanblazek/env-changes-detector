@@ -1,18 +1,15 @@
-import * as core from '@actions/core'
-import { promisify } from 'util'
+import { MARKDOWN_MESSAGE, OUTPUT } from './constants'
+import { getInput, setFailed, setOutput } from '@actions/core'
 import { exec } from 'child_process'
-
-const HAS_DETECTED_CHANGES = 'env-changes-detected'
-const RAW_OUTPUT = 'env-changes-raw'
-const MD_OUTPUT = 'env-changes-md'
+import { promisify } from 'util'
 
 async function run() {
   try {
-    const targetBranch = core.getInput('target-branch')
-    const filesToCheck: string[] = JSON.parse(core.getInput('files'))
-    core.setOutput(HAS_DETECTED_CHANGES, false)
-    core.setOutput(RAW_OUTPUT, [])
-    core.setOutput(MD_OUTPUT, 'No env file changes detected.')
+    const targetBranch = getInput('target-branch')
+    const filesToCheck: string[] = JSON.parse(getInput('files'))
+    setOutput(OUTPUT.HAS_DETECTED_CHANGES, false)
+    setOutput(OUTPUT.RAW, [])
+    setOutput(OUTPUT.MARKDOWN, MARKDOWN_MESSAGE.NO_CHANGES)
 
     const diffResult = await promisify(exec)(
       `git diff -w origin/${targetBranch} -- ${filesToCheck
@@ -27,7 +24,7 @@ async function run() {
       return
     }
 
-    const regex = /^(?<diff>[\+-]{1}\w.*)|(?:diff --git\sa(?<file>.*?)\s.*)$/gm
+    const regex = /^(?<diff>[+-]{1}\w.*)|(?:diff --git\sa(?<file>.*?)\s.*)$/gm
     const matches = Array.from(
       diffResult.stdout.matchAll(regex),
       (match) => match.groups as { [key: string]: string }
@@ -49,15 +46,15 @@ async function run() {
     })
     markdownMessage.push(`\`\`\``) // close last code block
 
-    core.setOutput(HAS_DETECTED_CHANGES, true)
-    core.setOutput(RAW_OUTPUT, matches)
-    core.setOutput(
-      MD_OUTPUT,
-      `## Detected changes in env files:\n\n${markdownMessage.join('\n')}`
+    setOutput(OUTPUT.HAS_DETECTED_CHANGES, true)
+    setOutput(OUTPUT.RAW, matches)
+    setOutput(
+      OUTPUT.MARKDOWN,
+      `${MARKDOWN_MESSAGE.CHANGES_DETECTED}\n\n${markdownMessage.join('\n')}`
     )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
-    console.log('There was an error. Check your inputs and try again.')
-    core.setFailed(error)
+    setFailed(error)
   }
 }
 

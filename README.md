@@ -1,6 +1,6 @@
-# env-changes-detector
+# Detect changes in env files
 
-Github action for detecting changes in env files. Useful for adding comments to PRs with changes to environment variables.
+Github action for detecting changes in env files. Useful for adding comments to PRs with changes to environment variables and more (see [outputs](#outputs)).
 
 ```
 - uses: jovanblazek/env-changes-detector@v1.0
