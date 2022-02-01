@@ -1,7 +1,7 @@
 {
 	"name": "env-changes-detector",
 	"version": "1.0.0",
-	"description": "Github action for detecting changes in env files in PRs",
+	"description": "Github action for detecting changes in env files. Outputs pretty diff.",
 	"main": "dist/index.js",
 	"scripts": {
 		"build": "npx tsc && npx ncc build --source-map"
@@ -16,7 +16,8 @@
 		"env",
 		"pull",
 		"enviroment",
-		"change"
+		"change",
+		"detector"
 	],
 	"author": "Jovan Blazek",
 	"license": "MIT",

@@ -1,8 +1,9 @@
 name: 'detect-env-file-changes'
 description: 'Check for changes in the files with environment variables'
 author: 'Jovan Blazek'
-icon: 'message-circle'
-color: 'blue'
+branding:
+  icon: 'git-pull-request'
+  color: 'blue'
 inputs:
   target-branch:
     description: 'Target branch to compare against'

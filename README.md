@@ -55,14 +55,12 @@ Do not forget to add `id` to your step to access the outputs.
 ## Detected changes in env files:
 
 `/.env.example`
-
 ``` diff
 -GENERAL_SECRET=
 +HELLO_THERE=
 ``` 
 
 `/api/.env.example`
-
 ``` diff
 +GENERAL_KENOBI=
 ```
