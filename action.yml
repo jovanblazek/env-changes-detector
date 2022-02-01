@@ -1,4 +1,4 @@
-name: 'detect-env-file-changes'
+name: 'Detect env file changes'
 description: 'Check for changes in the files with environment variables'
 author: 'Jovan Blazek'
 branding:

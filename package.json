@@ -1,6 +1,6 @@
 {
 	"name": "env-changes-detector",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Github action for detecting changes in env files. Outputs pretty diff.",
 	"main": "dist/index.js",
 	"scripts": {
