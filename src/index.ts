@@ -36,15 +36,15 @@ async function run() {
         if (index === 0) {
           return `\`${match.file}\`\n`
         }
-        return `\`\`\`\n\`${match.file}\`\n`
+        return `\n\`\`\`\n\`${match.file}\`\n`
       }
       const previousMatch = matches[index - 1]
       if (previousMatch.diff) {
-        return `${match.diff}\n`
+        return `\n${match.diff}`
       }
-      return `\`\`\` diff\n${match.diff}\n`
+      return `\`\`\` diff\n${match.diff}`
     })
-    markdownMessage.push(`\`\`\``) // close last code block
+    markdownMessage.push(`\n\`\`\``) // close last code block
 
     setOutput(OUTPUT.HAS_DETECTED_CHANGES, true)
     setOutput(OUTPUT.RAW, matches)

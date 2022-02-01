@@ -1,6 +1,94 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 912:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MARKDOWN_MESSAGE = exports.OUTPUT = void 0;
+exports.OUTPUT = {
+    HAS_DETECTED_CHANGES: 'env-changes-detected',
+    RAW: 'env-changes-raw',
+    MARKDOWN: 'env-changes-md',
+};
+exports.MARKDOWN_MESSAGE = {
+    NO_CHANGES: 'No env file changes detected.',
+    CHANGES_DETECTED: '## Detected changes in env files:',
+};
+
+
+/***/ }),
+
+/***/ 283:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const constants_1 = __nccwpck_require__(912);
+const core_1 = __nccwpck_require__(186);
+const child_process_1 = __nccwpck_require__(81);
+const util_1 = __nccwpck_require__(837);
+function run() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const targetBranch = (0, core_1.getInput)('target-branch');
+            const filesToCheck = JSON.parse((0, core_1.getInput)('files'));
+            (0, core_1.setOutput)(constants_1.OUTPUT.HAS_DETECTED_CHANGES, false);
+            (0, core_1.setOutput)(constants_1.OUTPUT.RAW, []);
+            (0, core_1.setOutput)(constants_1.OUTPUT.MARKDOWN, constants_1.MARKDOWN_MESSAGE.NO_CHANGES);
+            const diffResult = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w origin/${targetBranch} -- ${filesToCheck
+                .map((file) => `'${file}'`)
+                .join(' ')}`);
+            if (diffResult.stderr) {
+                throw new Error(diffResult.stderr);
+            }
+            if (diffResult.stdout === '') {
+                return;
+            }
+            const regex = /^(?<diff>[+-]{1}\w.*)|(?:diff --git\sa(?<file>.*?)\s.*)$/gm;
+            const matches = Array.from(diffResult.stdout.matchAll(regex), (match) => match.groups);
+            // format found changes to markdown syntax
+            const markdownMessage = matches.map((match, index) => {
+                if (match.file) {
+                    if (index === 0) {
+                        return `\`${match.file}\`\n`;
+                    }
+                    return `\n\`\`\`\n\`${match.file}\`\n`;
+                }
+                const previousMatch = matches[index - 1];
+                if (previousMatch.diff) {
+                    return `\n${match.diff}`;
+                }
+                return `\`\`\` diff\n${match.diff}`;
+            });
+            markdownMessage.push(`\n\`\`\``); // close last code block
+            (0, core_1.setOutput)(constants_1.OUTPUT.HAS_DETECTED_CHANGES, true);
+            (0, core_1.setOutput)(constants_1.OUTPUT.RAW, matches);
+            (0, core_1.setOutput)(constants_1.OUTPUT.MARKDOWN, `${constants_1.MARKDOWN_MESSAGE.CHANGES_DETECTED}\n\n${markdownMessage.join('\n')}`);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        }
+        catch (error) {
+            (0, core_1.setFailed)(error);
+        }
+    });
+}
+run();
+
+
+/***/ }),
+
 /***/ 351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -1555,94 +1643,6 @@ exports.debug = debug; // for test
 
 /***/ }),
 
-/***/ 42:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MARKDOWN_MESSAGE = exports.OUTPUT = void 0;
-exports.OUTPUT = {
-    HAS_DETECTED_CHANGES: 'env-changes-detected',
-    RAW: 'env-changes-raw',
-    MARKDOWN: 'env-changes-md',
-};
-exports.MARKDOWN_MESSAGE = {
-    NO_CHANGES: 'No env file changes detected.',
-    CHANGES_DETECTED: '## Detected changes in env files:',
-};
-
-
-/***/ }),
-
-/***/ 144:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const constants_1 = __nccwpck_require__(42);
-const core_1 = __nccwpck_require__(186);
-const child_process_1 = __nccwpck_require__(81);
-const util_1 = __nccwpck_require__(837);
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const targetBranch = (0, core_1.getInput)('target-branch');
-            const filesToCheck = JSON.parse((0, core_1.getInput)('files'));
-            (0, core_1.setOutput)(constants_1.OUTPUT.HAS_DETECTED_CHANGES, false);
-            (0, core_1.setOutput)(constants_1.OUTPUT.RAW, []);
-            (0, core_1.setOutput)(constants_1.OUTPUT.MARKDOWN, constants_1.MARKDOWN_MESSAGE.NO_CHANGES);
-            const diffResult = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w origin/${targetBranch} -- ${filesToCheck
-                .map((file) => `'${file}'`)
-                .join(' ')}`);
-            if (diffResult.stderr) {
-                throw new Error(diffResult.stderr);
-            }
-            if (diffResult.stdout === '') {
-                return;
-            }
-            const regex = /^(?<diff>[+-]{1}\w.*)|(?:diff --git\sa(?<file>.*?)\s.*)$/gm;
-            const matches = Array.from(diffResult.stdout.matchAll(regex), (match) => match.groups);
-            // format found changes to markdown syntax
-            const markdownMessage = matches.map((match, index) => {
-                if (match.file) {
-                    if (index === 0) {
-                        return `\`${match.file}\`\n`;
-                    }
-                    return `\`\`\`\n\`${match.file}\`\n`;
-                }
-                const previousMatch = matches[index - 1];
-                if (previousMatch.diff) {
-                    return `${match.diff}\n`;
-                }
-                return `\`\`\` diff\n${match.diff}\n`;
-            });
-            markdownMessage.push(`\`\`\``); // close last code block
-            (0, core_1.setOutput)(constants_1.OUTPUT.HAS_DETECTED_CHANGES, true);
-            (0, core_1.setOutput)(constants_1.OUTPUT.RAW, matches);
-            (0, core_1.setOutput)(constants_1.OUTPUT.MARKDOWN, `${constants_1.MARKDOWN_MESSAGE.CHANGES_DETECTED}\n\n${markdownMessage.join('\n')}`);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        }
-        catch (error) {
-            (0, core_1.setFailed)(error);
-        }
-    });
-}
-run();
-
-
-/***/ }),
-
 /***/ 491:
 /***/ ((module) => {
 
@@ -1773,7 +1773,7 @@ module.exports = require("util");
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(144);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(283);
 /******/ 	module.exports = __webpack_exports__;
 /******/ 	
 /******/ })()

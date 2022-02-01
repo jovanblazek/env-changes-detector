@@ -13,14 +13,13 @@ Github action for detecting changes in env files. Useful for adding comments to 
 
 | Name          | Description                                                                              | Default                                       | Required |
 | ------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------- | -------- |
-| target-branch | Target branch of PR. Set to PR target branch by default.                                 | `'${{ github.event.pull_request.base.ref }}'` | false    |
+| target-branch | Target branch of PR. Set to PR target branch by default.                                 | `github.event.pull_request.base.ref` | false    |
 | files         | Array of paths to check for changes. Can use glob patterns. See below for more examples. | `'["**.env-example", "**.env-test-example"]'` | false    |
 
 ### Custom files
 
 Customize paths to use when checking for changes using `files` input. You need to pass an array of strings as a string in order for it to work properly. Use parentheses `"` for array values and apostrophe `'` to wrap the entire array.
 
-#### Example
 
 ```
 files: '["env-example", "api/env-example"]'
@@ -34,9 +33,40 @@ You can also utilize glob patterns to search for files.
 | -------------------- | -------------------------------------------------------------- | ----------------------------- |
 | env-changes-detected | Boolean value indicating if specified files have been changed. | `false`                       |
 | env-changes-raw      | Raw data containing detected changes.                          | `[]`                          |
-| env-changes-md       | Generated report in Markdown.                                  | No env file changes detected. |
+| env-changes-md       | Generated report in Markdown.                                  | `'No env file changes detected.'` |
 
 Do not forget to add `id` to your step to access the outputs.
+
+### Examples
+
+#### Raw output:
+```
+[
+	{ "file": "/.env.example" },
+	{ "diff": "-GENERAL_SECRET=" },
+	{ "diff": "+HELLO_THERE=" },
+	{ "file": "/api/.env.example" },
+	{ "diff": "+GENERAL_KENOBI=" }
+]
+```
+
+#### Markdown output:
+````
+## Detected changes in env files:
+
+`/.env.example`
+
+``` diff
+-GENERAL_SECRET=
++HELLO_THERE=
+``` 
+
+`/api/.env.example`
+
+``` diff
++GENERAL_KENOBI=
+```
+````
 
 ## Post comment when changes are detected
 

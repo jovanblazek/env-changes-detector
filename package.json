@@ -2,7 +2,7 @@
 	"name": "env-changes-detector",
 	"version": "1.0.0",
 	"description": "Github action for detecting changes in env files in PRs",
-	"main": "src/index.ts",
+	"main": "dist/index.js",
 	"scripts": {
 		"build": "npx tsc && npx ncc build --source-map"
 	},
