@@ -3,7 +3,7 @@
 Github action for detecting changes in env files. Useful for adding comments to PRs with changes to environment variables and more (see [outputs](#outputs)).
 
 ```
-- uses: jovanblazek/env-changes-detector@v1.0
+- uses: jovanblazek/env-changes-detector@v1.0.1
   with:
     target-branch: ${{ github.event.pull_request.base.ref }}
     files: '["**env-example", "**env-test-example"]'
