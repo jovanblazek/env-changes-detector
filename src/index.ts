@@ -3,7 +3,7 @@ import { getInput, setFailed, setOutput } from '@actions/core'
 import { exec } from 'child_process'
 import { promisify } from 'util'
 
-async function run() {
+export const run = async () => {
   try {
     const targetBranch = getInput('target-branch')
     const filesToCheck: string[] = JSON.parse(getInput('files'))

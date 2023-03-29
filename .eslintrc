@@ -2,12 +2,20 @@
   "root": true,
   "parser": "@typescript-eslint/parser",
   "plugins": [
-    "@typescript-eslint"
+    "@typescript-eslint",
+    "jest"
   ],
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
     "plugin:github/recommended"
-  ]
+  ],
+  "rules": {
+    "filenames/match-regex": "off",
+    "i18n-text/no-en": "off"
+  },
+  "env": {
+    "jest/globals": true
+  }
 }
