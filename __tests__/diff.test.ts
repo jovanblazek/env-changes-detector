@@ -15,7 +15,7 @@ describe('diff', () => {
       const result = await getRawDiff('main', ['*.md', '**.ts'])
       expect(result).toBe('mock stdout')
       expect(mockExec).toHaveBeenCalledWith(
-        `git diff -w main -- '*.md' '**.ts'`,
+        `git diff -w origin/main -- '*.md' '**.ts'`,
         expect.any(Function)
       )
     })
@@ -31,7 +31,7 @@ describe('diff', () => {
         'mock error'
       )
       expect(mockExec).toHaveBeenCalledWith(
-        `git diff -w main -- '*.md' '**.ts'`,
+        `git diff -w origin/main -- '*.md' '**.ts'`,
         expect.any(Function)
       )
     })

@@ -2764,7 +2764,7 @@ const util_1 = __nccwpck_require__(837);
 const constants_1 = __nccwpck_require__(42);
 const getRawDiff = (targetBranch, filesPattern) => __awaiter(void 0, void 0, void 0, function* () {
     const filesPatternString = filesPattern.map(file => `'${file}'`).join(' ');
-    const { stdout, stderr } = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w ${targetBranch} -- ${filesPatternString}`);
+    const { stdout, stderr } = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w origin/${targetBranch} -- ${filesPatternString}`);
     if (stderr) {
         throw new Error(stderr);
     }
