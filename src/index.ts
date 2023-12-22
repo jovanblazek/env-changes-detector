@@ -1,6 +1,6 @@
 import { MARKDOWN_MESSAGE, OUTPUT } from './constants'
 import { getInput, setFailed, setOutput } from '@actions/core'
-import { getMarkdownDiff, getRawDiff } from './getDiff'
+import { getMarkdownDiff, getRawDiff } from './diff'
 
 export const run = async (): Promise<void> => {
   try {
@@ -9,6 +9,10 @@ export const run = async (): Promise<void> => {
     setOutput(OUTPUT.HAS_DETECTED_CHANGES, false)
     setOutput(OUTPUT.RAW, '')
     setOutput(OUTPUT.MARKDOWN, MARKDOWN_MESSAGE.NO_CHANGES)
+
+    if (!targetBranch || !filesToCheck?.length) {
+      throw new Error('Invalid input')
+    }
 
     const rawDiff = await getRawDiff(targetBranch, filesToCheck)
     if (!rawDiff) {
