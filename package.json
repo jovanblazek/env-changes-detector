@@ -4,7 +4,8 @@
 	"description": "Github action for detecting changes in env files. Outputs pretty diff.",
 	"main": "dist/index.js",
 	"scripts": {
-		"build": "npx tsc && npx ncc build --source-map"
+		"build": "npx tsc && npx ncc build --source-map",
+    "test": "jest"
 	},
 	"repository": {
 		"type": "git",
