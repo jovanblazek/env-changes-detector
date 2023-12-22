@@ -2743,7 +2743,7 @@ exports.MARKDOWN_MESSAGE = {
 
 /***/ }),
 
-/***/ 924:
+/***/ 275:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -2814,7 +2814,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const constants_1 = __nccwpck_require__(42);
 const core_1 = __nccwpck_require__(186);
-const getDiff_1 = __nccwpck_require__(924);
+const diff_1 = __nccwpck_require__(275);
 const run = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const targetBranch = (0, core_1.getInput)('target-branch');
@@ -2822,11 +2822,14 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         (0, core_1.setOutput)(constants_1.OUTPUT.HAS_DETECTED_CHANGES, false);
         (0, core_1.setOutput)(constants_1.OUTPUT.RAW, '');
         (0, core_1.setOutput)(constants_1.OUTPUT.MARKDOWN, constants_1.MARKDOWN_MESSAGE.NO_CHANGES);
-        const rawDiff = yield (0, getDiff_1.getRawDiff)(targetBranch, filesToCheck);
+        if (!targetBranch || !(filesToCheck === null || filesToCheck === void 0 ? void 0 : filesToCheck.length)) {
+            throw new Error('Invalid input');
+        }
+        const rawDiff = yield (0, diff_1.getRawDiff)(targetBranch, filesToCheck);
         if (!rawDiff) {
             return;
         }
-        const markdownMessage = (0, getDiff_1.getMarkdownDiff)(rawDiff);
+        const markdownMessage = (0, diff_1.getMarkdownDiff)(rawDiff);
         (0, core_1.setOutput)(constants_1.OUTPUT.HAS_DETECTED_CHANGES, true);
         (0, core_1.setOutput)(constants_1.OUTPUT.RAW, rawDiff);
         (0, core_1.setOutput)(constants_1.OUTPUT.MARKDOWN, `${constants_1.MARKDOWN_MESSAGE.CHANGES_DETECTED}\n\n${markdownMessage}`);
