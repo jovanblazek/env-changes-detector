@@ -8,7 +8,7 @@ export const getRawDiff = async (
 ): Promise<string> => {
   const filesPatternString = filesPattern.map(file => `'${file}'`).join(' ')
   const { stdout, stderr } = await promisify(exec)(
-    `git diff -w ${targetBranch} -- ${filesPatternString}`
+    `git diff -w origin/${targetBranch} -- ${filesPatternString}`
   )
   if (stderr) {
     throw new Error(stderr)
