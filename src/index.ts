@@ -22,10 +22,7 @@ export const run = async (): Promise<void> => {
 
     setOutput(OUTPUT.HAS_DETECTED_CHANGES, true)
     setOutput(OUTPUT.RAW, rawDiff)
-    setOutput(
-      OUTPUT.MARKDOWN,
-      `${MARKDOWN_MESSAGE.CHANGES_DETECTED}\n\n${markdownMessage}`
-    )
+    setOutput(OUTPUT.MARKDOWN, markdownMessage)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     setFailed(error)

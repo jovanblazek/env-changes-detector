@@ -79,7 +79,7 @@ describe('run', () => {
     expect(mockSetOutput).toHaveBeenCalledWith(OUTPUT.RAW, 'mock raw diff')
     expect(mockSetOutput).toHaveBeenCalledWith(
       OUTPUT.MARKDOWN,
-      `${MARKDOWN_MESSAGE.CHANGES_DETECTED}\n\nmock markdown diff`
+      `mock markdown diff`
     )
     expect(mockSetOutput).toHaveBeenCalledTimes(6) // 3 at the beginning + 3 here
   })
