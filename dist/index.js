@@ -2832,7 +2832,7 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
         const markdownMessage = (0, diff_1.getMarkdownDiff)(rawDiff);
         (0, core_1.setOutput)(constants_1.OUTPUT.HAS_DETECTED_CHANGES, true);
         (0, core_1.setOutput)(constants_1.OUTPUT.RAW, rawDiff);
-        (0, core_1.setOutput)(constants_1.OUTPUT.MARKDOWN, `${constants_1.MARKDOWN_MESSAGE.CHANGES_DETECTED}\n\n${markdownMessage}`);
+        (0, core_1.setOutput)(constants_1.OUTPUT.MARKDOWN, markdownMessage);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }
     catch (error) {
