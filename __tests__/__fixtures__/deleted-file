@@ -1,0 +1,7 @@
+diff --git a/deleteFile.md b/deleteFile.md
+deleted file mode 100644
+index aa39060..0000000
+--- a/deleteFile.md
++++ /dev/null
+@@ -1 +0,0 @@
+-deleteFile

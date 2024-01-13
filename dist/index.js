@@ -2736,8 +2736,10 @@ exports.OUTPUT = {
 };
 exports.MARKDOWN_MESSAGE = {
     NO_CHANGES: 'No env file changes detected.',
-    CHANGES_DETECTED: '## Detected changes in env files:',
-    CHANGES_FALLBACK: 'Could not determine what has changed. Manual check required.'
+    CHANGES_DETECTED: 'Detected changes in env files:',
+    FILE_RENAMED: 'File was renamed.',
+    FILE_DELETED: 'File was deleted.',
+    PARSING_ERROR: 'Could not determine what has changed. Manual check required.'
 };
 
 
@@ -2757,39 +2759,86 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getMarkdownDiff = exports.getRawDiff = void 0;
 const child_process_1 = __nccwpck_require__(81);
 const util_1 = __nccwpck_require__(837);
+const parse_git_diff_1 = __importDefault(__nccwpck_require__(298));
 const constants_1 = __nccwpck_require__(42);
+const markdownUtils_1 = __nccwpck_require__(737);
 const getRawDiff = (targetBranch, filesPattern) => __awaiter(void 0, void 0, void 0, function* () {
     const filesPatternString = filesPattern.map(file => `'${file}'`).join(' ');
-    const { stdout, stderr } = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w origin/${targetBranch} -- ${filesPatternString}`);
+    const { stdout, stderr } = yield (0, util_1.promisify)(child_process_1.exec)(`git diff -w -M100% origin/${targetBranch} -- ${filesPatternString}`);
     if (stderr) {
         throw new Error(stderr);
     }
     return stdout;
 });
 exports.getRawDiff = getRawDiff;
-const getMarkdownDiff = (rawDiff) => {
-    var _a;
-    const fileDiffs = rawDiff.split('diff --git a/');
-    let markdownDiff = '';
-    const hasDetectedChanges = rawDiff.length > 0;
-    for (const fileDiff of fileDiffs.slice(1)) {
-        // skip the first element as it's empty
-        const lines = fileDiff.split('\n');
-        // get the file name from the first line
-        const fileName = lines[0].split(' ')[0];
-        // filter the diff lines to only include the ones that start with + or -
-        const filteredLines = 
-        // eslint-disable-next-line no-useless-escape
-        (_a = lines.slice(1).filter(line => /^[\+-]{1}[^+-]/.test(line))) !== null && _a !== void 0 ? _a : constants_1.MARKDOWN_MESSAGE.CHANGES_FALLBACK;
-        markdownDiff += `#### \`${fileName}\`\n\`\`\`diff\n${filteredLines.join('\n')}\n\`\`\`\n`;
+const convertLineChangeToMarkdown = (lineChange) => {
+    const { type, content } = lineChange;
+    switch (type) {
+        case 'AddedLine':
+            return `+ ${content}`;
+        case 'DeletedLine':
+            return `- ${content}`;
+        default:
+            return '';
     }
-    return hasDetectedChanges
-        ? `${constants_1.MARKDOWN_MESSAGE.CHANGES_DETECTED}\n${markdownDiff}`
-        : constants_1.MARKDOWN_MESSAGE.NO_CHANGES;
+};
+const convertChunkToMarkdown = (chunk) => {
+    const { type } = chunk;
+    switch (type) {
+        case 'Chunk':
+        case 'CombinedChunk':
+            return chunk.changes.map(convertLineChangeToMarkdown).filter(Boolean); // Remove empty strings
+        default:
+            return [];
+    }
+};
+const getFileDiff = (file) => {
+    const { type, chunks } = file;
+    const fileDiff = chunks.flatMap(convertChunkToMarkdown).join('\n');
+    if (!fileDiff.length && (type === 'AddedFile' || type === 'ChangedFile')) {
+        throw new Error(`Could not parse diff for file: ${file.path}.`);
+    }
+    switch (type) {
+        case 'AddedFile':
+        case 'ChangedFile': {
+            return `${(0, markdownUtils_1.getFileDiffHeader)(file.path)}${(0, markdownUtils_1.getMarkdownDiffWrapper)(fileDiff)}`;
+        }
+        case 'RenamedFile': {
+            return `${(0, markdownUtils_1.getRenamedFileDiffHeader)(file.pathBefore, file.pathAfter)}${(0, markdownUtils_1.getMarkdownDiffWrapper)(constants_1.MARKDOWN_MESSAGE.FILE_RENAMED)}`;
+        }
+        case 'DeletedFile': {
+            return `${(0, markdownUtils_1.getFileDiffHeader)(file.path)}${(0, markdownUtils_1.getMarkdownDiffWrapper)(constants_1.MARKDOWN_MESSAGE.FILE_DELETED)}`;
+        }
+        default:
+            return '';
+    }
+};
+const getMarkdownDiff = (rawDiff) => {
+    const hasDetectedChanges = rawDiff.length > 0;
+    if (!hasDetectedChanges) {
+        return constants_1.MARKDOWN_MESSAGE.NO_CHANGES;
+    }
+    const { files } = (0, parse_git_diff_1.default)(rawDiff);
+    let markdownDiff = '';
+    for (const file of files) {
+        try {
+            const fileDiff = getFileDiff(file);
+            markdownDiff += `${fileDiff}\n`;
+        }
+        catch (_a) {
+            markdownDiff += `${(0, markdownUtils_1.getFileDiffHeader)(file.type === 'RenamedFile'
+                ? (0, markdownUtils_1.getRenamedFileDiffHeader)(file.pathBefore, file.pathAfter)
+                : file.path)}${constants_1.MARKDOWN_MESSAGE.PARSING_ERROR}\n`;
+        }
+    }
+    return `## ${constants_1.MARKDOWN_MESSAGE.CHANGES_DETECTED}\n${markdownDiff}`;
 };
 exports.getMarkdownDiff = getMarkdownDiff;
 
@@ -2841,6 +2890,23 @@ const run = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.run = run;
 (0, exports.run)();
+
+
+/***/ }),
+
+/***/ 737:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getMarkdownDiffWrapper = exports.getRenamedFileDiffHeader = exports.getFileDiffHeader = void 0;
+const getFileDiffHeader = (fileName) => `#### \`${fileName}\`\n`;
+exports.getFileDiffHeader = getFileDiffHeader;
+const getRenamedFileDiffHeader = (pathBefore, pathAfter) => `#### \`${pathBefore} -> ${pathAfter}\`\n`;
+exports.getRenamedFileDiffHeader = getRenamedFileDiffHeader;
+const getMarkdownDiffWrapper = (diff) => `\`\`\`diff\n${diff}\n\`\`\`\n`;
+exports.getMarkdownDiffWrapper = getMarkdownDiffWrapper;
 
 
 /***/ }),
@@ -2938,6 +3004,409 @@ module.exports = require("tls");
 
 "use strict";
 module.exports = require("util");
+
+/***/ }),
+
+/***/ 25:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ExtendedHeaderValues = exports.ExtendedHeader = exports.FileType = exports.LineType = void 0;
+exports.LineType = {
+    Added: 'AddedLine',
+    Deleted: 'DeletedLine',
+    Unchanged: 'UnchangedLine',
+    Message: 'MessageLine',
+};
+exports.FileType = {
+    Changed: 'ChangedFile',
+    Added: 'AddedFile',
+    Deleted: 'DeletedFile',
+    Renamed: 'RenamedFile',
+};
+exports.ExtendedHeader = {
+    Index: 'index',
+    Old: 'old',
+    Copy: 'copy',
+    Similarity: 'similarity',
+    Dissimilarity: 'dissimilarity',
+    Deleted: 'deleted',
+    NewFile: 'new file',
+    RenameFrom: 'rename from',
+    RenameTo: 'rename to',
+};
+exports.ExtendedHeaderValues = Object.values(exports.ExtendedHeader);
+//# sourceMappingURL=constants.js.map
+
+/***/ }),
+
+/***/ 646:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+class Context {
+    line = 1;
+    lines = [];
+    options = {
+        noPrefix: false,
+    };
+    constructor(diff, options) {
+        this.lines = diff.split('\n');
+        this.options.noPrefix = !!options?.noPrefix;
+    }
+    getCurLine() {
+        return this.lines[this.line - 1];
+    }
+    nextLine() {
+        this.line++;
+        return this.getCurLine();
+    }
+    isEof() {
+        return this.line > this.lines.length;
+    }
+}
+exports["default"] = Context;
+//# sourceMappingURL=context.js.map
+
+/***/ }),
+
+/***/ 298:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const parse_git_diff_js_1 = __importDefault(__nccwpck_require__(418));
+exports["default"] = parse_git_diff_js_1.default;
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 418:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const context_js_1 = __importDefault(__nccwpck_require__(646));
+const constants_js_1 = __nccwpck_require__(25);
+function parseGitDiff(diff, options) {
+    const ctx = new context_js_1.default(diff, options);
+    const files = parseFileChanges(ctx);
+    return {
+        type: 'GitDiff',
+        files,
+    };
+}
+exports["default"] = parseGitDiff;
+function parseFileChanges(ctx) {
+    const changedFiles = [];
+    while (!ctx.isEof()) {
+        const changed = parseFileChange(ctx);
+        if (!changed) {
+            break;
+        }
+        changedFiles.push(changed);
+    }
+    return changedFiles;
+}
+function parseFileChange(ctx) {
+    if (!isComparisonInputLine(ctx.getCurLine())) {
+        return;
+    }
+    ctx.nextLine();
+    let isDeleted = false;
+    let isNew = false;
+    let isRename = false;
+    let pathBefore = '';
+    let pathAfter = '';
+    while (!ctx.isEof()) {
+        const extHeader = parseExtendedHeader(ctx);
+        if (!extHeader) {
+            break;
+        }
+        if (extHeader.type === constants_js_1.ExtendedHeader.Deleted)
+            isDeleted = true;
+        if (extHeader.type === constants_js_1.ExtendedHeader.NewFile)
+            isNew = true;
+        if (extHeader.type === constants_js_1.ExtendedHeader.RenameFrom) {
+            isRename = true;
+            pathBefore = extHeader.path;
+        }
+        if (extHeader.type === constants_js_1.ExtendedHeader.RenameTo) {
+            isRename = true;
+            pathAfter = extHeader.path;
+        }
+    }
+    const changeMarkers = parseChangeMarkers(ctx);
+    const chunks = parseChunks(ctx);
+    if (isDeleted && changeMarkers) {
+        return {
+            type: constants_js_1.FileType.Deleted,
+            chunks,
+            path: changeMarkers.deleted,
+        };
+    }
+    else if (isDeleted &&
+        chunks.length &&
+        chunks[0].type === 'BinaryFilesChunk') {
+        return {
+            type: constants_js_1.FileType.Deleted,
+            chunks,
+            path: chunks[0].pathBefore,
+        };
+    }
+    else if (isNew && changeMarkers) {
+        return {
+            type: constants_js_1.FileType.Added,
+            chunks,
+            path: changeMarkers.added,
+        };
+    }
+    else if (isNew && chunks.length && chunks[0].type === 'BinaryFilesChunk') {
+        return {
+            type: constants_js_1.FileType.Added,
+            chunks,
+            path: chunks[0].pathAfter,
+        };
+    }
+    else if (isRename) {
+        return {
+            type: constants_js_1.FileType.Renamed,
+            pathAfter,
+            pathBefore,
+            chunks,
+        };
+    }
+    else if (changeMarkers) {
+        return {
+            type: constants_js_1.FileType.Changed,
+            chunks,
+            path: changeMarkers.added,
+        };
+    }
+    else if (chunks.length &&
+        chunks[0].type === 'BinaryFilesChunk' &&
+        chunks[0].pathAfter) {
+        return {
+            type: constants_js_1.FileType.Changed,
+            chunks,
+            path: chunks[0].pathAfter,
+        };
+    }
+    return;
+}
+function isComparisonInputLine(line) {
+    return line.indexOf('diff') === 0;
+}
+function parseChunks(context) {
+    const chunks = [];
+    while (!context.isEof()) {
+        const chunk = parseChunk(context);
+        if (!chunk) {
+            break;
+        }
+        chunks.push(chunk);
+    }
+    return chunks;
+}
+function parseChunk(context) {
+    const chunkHeader = parseChunkHeader(context);
+    if (!chunkHeader) {
+        return;
+    }
+    if (chunkHeader.type === 'Normal') {
+        const changes = parseChanges(context, chunkHeader.fromFileRange, chunkHeader.toFileRange);
+        return {
+            ...chunkHeader,
+            type: 'Chunk',
+            changes,
+        };
+    }
+    else if (chunkHeader.type === 'Combined' &&
+        chunkHeader.fromFileRangeA &&
+        chunkHeader.fromFileRangeB) {
+        const changes = parseChanges(context, chunkHeader.fromFileRangeA.start < chunkHeader.fromFileRangeB.start
+            ? chunkHeader.fromFileRangeA
+            : chunkHeader.fromFileRangeB, chunkHeader.toFileRange);
+        return {
+            ...chunkHeader,
+            type: 'CombinedChunk',
+            changes,
+        };
+    }
+    else if (chunkHeader.type === 'BinaryFiles' &&
+        chunkHeader.fileA &&
+        chunkHeader.fileB) {
+        return {
+            type: 'BinaryFilesChunk',
+            pathBefore: chunkHeader.fileA,
+            pathAfter: chunkHeader.fileB,
+        };
+    }
+}
+function parseExtendedHeader(ctx) {
+    const line = ctx.getCurLine();
+    const type = constants_js_1.ExtendedHeaderValues.find((v) => line.startsWith(v));
+    if (type) {
+        ctx.nextLine();
+    }
+    if (type === constants_js_1.ExtendedHeader.RenameFrom || type === constants_js_1.ExtendedHeader.RenameTo) {
+        return {
+            type,
+            path: line.slice(`${type} `.length),
+        };
+    }
+    else if (type) {
+        return {
+            type,
+        };
+    }
+    return null;
+}
+function parseChunkHeader(ctx) {
+    const line = ctx.getCurLine();
+    const normalChunkExec = /^@@\s\-(\d+),?(\d+)?\s\+(\d+),?(\d+)?\s@@\s?(.+)?/.exec(line);
+    if (!normalChunkExec) {
+        const combinedChunkExec = /^@@@\s\-(\d+),?(\d+)?\s\-(\d+),?(\d+)?\s\+(\d+),?(\d+)?\s@@@\s?(.+)?/.exec(line);
+        if (!combinedChunkExec) {
+            const binaryChunkExec = /^Binary\sfiles\s(.*)\sand\s(.*)\sdiffer$/.exec(line);
+            if (binaryChunkExec) {
+                const [all, fileA, fileB] = binaryChunkExec;
+                ctx.nextLine();
+                return {
+                    type: 'BinaryFiles',
+                    fileA: getFilePath(ctx, fileA, 'src'),
+                    fileB: getFilePath(ctx, fileB, 'dst'),
+                };
+            }
+            return null;
+        }
+        const [all, delStartA, delLinesA, delStartB, delLinesB, addStart, addLines, context,] = combinedChunkExec;
+        ctx.nextLine();
+        return {
+            context,
+            type: 'Combined',
+            fromFileRangeA: getRange(delStartA, delLinesA),
+            fromFileRangeB: getRange(delStartB, delLinesB),
+            toFileRange: getRange(addStart, addLines),
+        };
+    }
+    const [all, delStart, delLines, addStart, addLines, context] = normalChunkExec;
+    ctx.nextLine();
+    return {
+        context,
+        type: 'Normal',
+        toFileRange: getRange(addStart, addLines),
+        fromFileRange: getRange(delStart, delLines),
+    };
+}
+function getRange(start, lines) {
+    const startNum = parseInt(start, 10);
+    return {
+        start: startNum,
+        lines: lines === undefined ? startNum : parseInt(lines, 10),
+    };
+}
+function parseChangeMarkers(context) {
+    const deleterMarker = parseMarker(context, '--- ');
+    const deleted = deleterMarker
+        ? getFilePath(context, deleterMarker, 'src')
+        : deleterMarker;
+    const addedMarker = parseMarker(context, '+++ ');
+    const added = addedMarker
+        ? getFilePath(context, addedMarker, 'dst')
+        : addedMarker;
+    return added && deleted ? { added, deleted } : null;
+}
+function parseMarker(context, marker) {
+    const line = context.getCurLine();
+    if (line?.startsWith(marker)) {
+        context.nextLine();
+        return line.replace(marker, '');
+    }
+    return null;
+}
+const CHAR_TYPE_MAP = {
+    '+': constants_js_1.LineType.Added,
+    '-': constants_js_1.LineType.Deleted,
+    ' ': constants_js_1.LineType.Unchanged,
+    '\\': constants_js_1.LineType.Message,
+};
+function parseChanges(ctx, rangeBefore, rangeAfter) {
+    const changes = [];
+    let lineBefore = rangeBefore.start;
+    let lineAfter = rangeAfter.start;
+    while (!ctx.isEof()) {
+        const line = ctx.getCurLine();
+        const type = getLineType(line);
+        if (!type) {
+            break;
+        }
+        ctx.nextLine();
+        let change;
+        const content = line.slice(1);
+        switch (type) {
+            case constants_js_1.LineType.Added: {
+                change = {
+                    type,
+                    lineAfter: lineAfter++,
+                    content,
+                };
+                break;
+            }
+            case constants_js_1.LineType.Deleted: {
+                change = {
+                    type,
+                    lineBefore: lineBefore++,
+                    content,
+                };
+                break;
+            }
+            case constants_js_1.LineType.Unchanged: {
+                change = {
+                    type,
+                    lineBefore: lineBefore++,
+                    lineAfter: lineAfter++,
+                    content,
+                };
+                break;
+            }
+            case constants_js_1.LineType.Message: {
+                change = {
+                    type,
+                    content: content.trim(),
+                };
+                break;
+            }
+        }
+        changes.push(change);
+    }
+    return changes;
+}
+function getLineType(line) {
+    return CHAR_TYPE_MAP[line[0]] || null;
+}
+function getFilePath(ctx, input, type) {
+    if (ctx.options.noPrefix) {
+        return input;
+    }
+    if (type === 'src')
+        return input.replace(/^a\//, '');
+    if (type === 'dst')
+        return input.replace(/^b\//, '');
+}
+//# sourceMappingURL=parse-git-diff.js.map
 
 /***/ })
 

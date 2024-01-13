@@ -1,6 +1,16 @@
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import parseGitDiff, {
+  type AnyChunk,
+  type AnyFileChange,
+  type AnyLineChange
+} from 'parse-git-diff'
 import { MARKDOWN_MESSAGE } from './constants'
+import {
+  getFileDiffHeader,
+  getMarkdownDiffWrapper,
+  getRenamedFileDiffHeader
+} from './markdownUtils'
 
 export const getRawDiff = async (
   targetBranch: string,
@@ -8,7 +18,7 @@ export const getRawDiff = async (
 ): Promise<string> => {
   const filesPatternString = filesPattern.map(file => `'${file}'`).join(' ')
   const { stdout, stderr } = await promisify(exec)(
-    `git diff -w origin/${targetBranch} -- ${filesPatternString}`
+    `git diff -w -M100% origin/${targetBranch} -- ${filesPatternString}`
   )
   if (stderr) {
     throw new Error(stderr)
@@ -16,25 +26,81 @@ export const getRawDiff = async (
   return stdout
 }
 
-export const getMarkdownDiff = (rawDiff: string): string => {
-  const fileDiffs = rawDiff.split('diff --git a/')
-  let markdownDiff = ''
-  const hasDetectedChanges = rawDiff.length > 0
-  for (const fileDiff of fileDiffs.slice(1)) {
-    // skip the first element as it's empty
-    const lines = fileDiff.split('\n')
-    // get the file name from the first line
-    const fileName = lines[0].split(' ')[0]
-    // filter the diff lines to only include the ones that start with + or -
-    const filteredLines =
-      // eslint-disable-next-line no-useless-escape
-      lines.slice(1).filter(line => /^[\+-]{1}[^+-]/.test(line)) ??
-      MARKDOWN_MESSAGE.CHANGES_FALLBACK
-    markdownDiff += `#### \`${fileName}\`\n\`\`\`diff\n${filteredLines.join(
-      '\n'
-    )}\n\`\`\`\n`
+const convertLineChangeToMarkdown = (lineChange: AnyLineChange): string => {
+  const { type, content } = lineChange
+  switch (type) {
+    case 'AddedLine':
+      return `+ ${content}`
+    case 'DeletedLine':
+      return `- ${content}`
+    default:
+      return ''
   }
-  return hasDetectedChanges
-    ? `${MARKDOWN_MESSAGE.CHANGES_DETECTED}\n${markdownDiff}`
-    : MARKDOWN_MESSAGE.NO_CHANGES
+}
+
+const convertChunkToMarkdown = (chunk: AnyChunk): string[] => {
+  const { type } = chunk
+  switch (type) {
+    case 'Chunk':
+    case 'CombinedChunk':
+      return chunk.changes.map(convertLineChangeToMarkdown).filter(Boolean) // Remove empty strings
+    default:
+      return []
+  }
+}
+
+const getFileDiff = (file: AnyFileChange): string => {
+  const { type, chunks } = file
+  const fileDiff = chunks.flatMap(convertChunkToMarkdown).join('\n')
+  if (!fileDiff.length && (type === 'AddedFile' || type === 'ChangedFile')) {
+    throw new Error(`Could not parse diff for file: ${file.path}.`)
+  }
+
+  switch (type) {
+    case 'AddedFile':
+    case 'ChangedFile': {
+      return `${getFileDiffHeader(file.path)}${getMarkdownDiffWrapper(
+        fileDiff
+      )}`
+    }
+    case 'RenamedFile': {
+      return `${getRenamedFileDiffHeader(
+        file.pathBefore,
+        file.pathAfter
+      )}${getMarkdownDiffWrapper(MARKDOWN_MESSAGE.FILE_RENAMED)}`
+    }
+    case 'DeletedFile': {
+      return `${getFileDiffHeader(file.path)}${getMarkdownDiffWrapper(
+        MARKDOWN_MESSAGE.FILE_DELETED
+      )}`
+    }
+    default:
+      return ''
+  }
+}
+
+export const getMarkdownDiff = (rawDiff: string): string => {
+  const hasDetectedChanges = rawDiff.length > 0
+
+  if (!hasDetectedChanges) {
+    return MARKDOWN_MESSAGE.NO_CHANGES
+  }
+
+  const { files } = parseGitDiff(rawDiff)
+  let markdownDiff = ''
+
+  for (const file of files) {
+    try {
+      const fileDiff = getFileDiff(file)
+      markdownDiff += `${fileDiff}\n`
+    } catch {
+      markdownDiff += `${getFileDiffHeader(
+        file.type === 'RenamedFile'
+          ? getRenamedFileDiffHeader(file.pathBefore, file.pathAfter)
+          : file.path
+      )}${MARKDOWN_MESSAGE.PARSING_ERROR}\n`
+    }
+  }
+
+  return `## ${MARKDOWN_MESSAGE.CHANGES_DETECTED}\n${markdownDiff}`
 }

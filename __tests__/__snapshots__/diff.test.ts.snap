@@ -1,0 +1,90 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`diff getMarkdownDiff should not include unchanged lines in the markdown diff 1`] = `
+"## Detected changes in env files:
+#### \`unchangedLine.js\`
+\`\`\`diff
++   console.log("hello world");
+\`\`\`
+
+"
+`;
+
+exports[`diff getMarkdownDiff should return a markdown diff when the file is added 1`] = `
+"## Detected changes in env files:
+#### \`newfile.md\`
+\`\`\`diff
++ newfile
+\`\`\`
+
+"
+`;
+
+exports[`diff getMarkdownDiff should return a markdown diff when the file is deleted 1`] = `
+"## Detected changes in env files:
+#### \`deleteFile.md\`
+\`\`\`diff
+File was deleted.
+\`\`\`
+
+"
+`;
+
+exports[`diff getMarkdownDiff should return a markdown diff when the file is renamed 1`] = `
+"## Detected changes in env files:
+#### \`newfile.md -> rename.md\`
+\`\`\`diff
+File was renamed.
+\`\`\`
+
+"
+`;
+
+exports[`diff getMarkdownDiff should return a markdown diff when the there are multiple changed files 1`] = `
+"## Detected changes in env files:
+#### \`deleteLine.md\`
+\`\`\`diff
+- newline
+\`\`\`
+
+#### \`deleteFile.md\`
+\`\`\`diff
+File was deleted.
+\`\`\`
+
+#### \`newfile.md\`
+\`\`\`diff
++ newfile
+\`\`\`
+
+#### \`newLine.md\`
+\`\`\`diff
++ newline
+\`\`\`
+
+#### \`newfile.md -> rename.md\`
+\`\`\`diff
+File was renamed.
+\`\`\`
+
+#### \`changedLines.md\`
+\`\`\`diff
+- oldLine
+- oldLine2
++ changedLine
+\`\`\`
+
+"
+`;
+
+exports[`diff getMarkdownDiff should return a markdown diff when the there are multiple changed lines in one file 1`] = `
+"## Detected changes in env files:
+#### \`changedLines.md\`
+\`\`\`diff
+- oldLine
+- oldLine2
++ changedLine
+\`\`\`
+
+"
+`;

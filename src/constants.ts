@@ -6,7 +6,8 @@ export const OUTPUT = {
 
 export const MARKDOWN_MESSAGE = {
   NO_CHANGES: 'No env file changes detected.',
-  CHANGES_DETECTED: '## Detected changes in env files:',
-  CHANGES_FALLBACK:
-    'Could not determine what has changed. Manual check required.'
+  CHANGES_DETECTED: 'Detected changes in env files:',
+  FILE_RENAMED: 'File was renamed.',
+  FILE_DELETED: 'File was deleted.',
+  PARSING_ERROR: 'Could not determine what has changed. Manual check required.'
 }
