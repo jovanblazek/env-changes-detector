@@ -7,7 +7,7 @@ PRs with changes to environment variables and more (see [outputs](#outputs)).
 - uses: jovanblazek/env-changes-detector@v2
   with:
     target-branch: ${{ github.event.pull_request.base.ref }}
-    files: '["**env-example", "**env-test-example"]'
+    files: '["**.env-example", "**.env-test-example"]'
 ```
 
 ## Inputs
@@ -24,7 +24,7 @@ to pass an array of strings as a string in order for it to work properly. Use
 parentheses `"` for array values and apostrophe `'` to wrap the entire array.
 
 ```
-files: '["env-example", "api/env-example"]'
+files: '[".env-example", "api/.env-example"]'
 ```
 
 You can also utilize glob patterns to search for files.

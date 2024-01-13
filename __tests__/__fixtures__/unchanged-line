@@ -1,0 +1,7 @@
+diff --git a/unchangedLine.js b/unchangedLine.js
+index aa39060..0e05564 100644
+--- a/unchangedLine.js
++++ b/unchangedLine.js
+@@ -4 +4,5 @@ function hello() {
+   // hello world
++  console.log("hello world");

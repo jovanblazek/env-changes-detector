@@ -1,0 +1,7 @@
+diff --git a/deleteLine.md b/deleteLine.md
+index 0e05564..aa39060 100644
+--- a/deleteLine.md
++++ b/deleteLine.md
+@@ -1,2 +1 @@
+ newfile
+-deleteLine

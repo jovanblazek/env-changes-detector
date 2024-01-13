@@ -1,6 +1,7 @@
 import { MARKDOWN_MESSAGE } from '../src/constants'
 import { getMarkdownDiff, getRawDiff } from '../src/diff'
 import { exec } from 'child_process'
+import { getFixture } from './utils'
 jest.mock('child_process')
 
 describe('diff', () => {
@@ -15,7 +16,7 @@ describe('diff', () => {
       const result = await getRawDiff('main', ['*.md', '**.ts'])
       expect(result).toBe('mock stdout')
       expect(mockExec).toHaveBeenCalledWith(
-        `git diff -w origin/main -- '*.md' '**.ts'`,
+        `git diff -w -M100% origin/main -- '*.md' '**.ts'`,
         expect.any(Function)
       )
     })
@@ -31,7 +32,7 @@ describe('diff', () => {
         'mock error'
       )
       expect(mockExec).toHaveBeenCalledWith(
-        `git diff -w origin/main -- '*.md' '**.ts'`,
+        `git diff -w -M100% origin/main -- '*.md' '**.ts'`,
         expect.any(Function)
       )
     })
@@ -44,31 +45,23 @@ describe('diff', () => {
       expect(result).toBe(MARKDOWN_MESSAGE.NO_CHANGES)
     })
 
-    it('should return a markdown diff when there are changes', () => {
-      const rawDiff =
-        'diff --git a/test.md b/test.md\n+added line\n-removed line'
+    it.each([
+      ['file is added', 'new-file'],
+      ['file is deleted', 'deleted-file'],
+      ['file is renamed', 'renamed-file'],
+      ['there are multiple changed lines in one file', 'changed-lines'],
+      ['there are multiple changed files', 'all']
+    ])('should return a markdown diff when the %s', (_, fixtureName) => {
+      const rawDiff = getFixture(fixtureName)
       const result = getMarkdownDiff(rawDiff)
-      expect(result).toBe(
-        `${MARKDOWN_MESSAGE.CHANGES_DETECTED}\n#### \`test.md\`\n\`\`\`diff\n+added line\n-removed line\n\`\`\`\n`
-      )
+      expect(result).toMatchSnapshot()
     })
 
-    it('should only include lines that start with + or - in the markdown diff', () => {
-      const rawDiff =
-        'diff --git a/test.md b/test.md\n+added line\n-removed line\n unchanged line'
+    it('should not include unchanged lines in the markdown diff', () => {
+      const rawDiff = getFixture('unchanged-line')
       const result = getMarkdownDiff(rawDiff)
-      expect(result).toBe(
-        `${MARKDOWN_MESSAGE.CHANGES_DETECTED}\n#### \`test.md\`\n\`\`\`diff\n+added line\n-removed line\n\`\`\`\n`
-      )
-    })
-
-    it('should handle multiple files', () => {
-      const rawDiff =
-        'diff --git a/test1.md b/test1.md\n+added line\n-removed line\ndiff --git a/test2.md b/test2.md\n+added line\n-removed line'
-      const result = getMarkdownDiff(rawDiff)
-      expect(result).toBe(
-        `${MARKDOWN_MESSAGE.CHANGES_DETECTED}\n#### \`test1.md\`\n\`\`\`diff\n+added line\n-removed line\n\`\`\`\n#### \`test2.md\`\n\`\`\`diff\n+added line\n-removed line\n\`\`\`\n`
-      )
+      console.log('result\n', result)
+      expect(result).toMatchSnapshot()
     })
   })
 })
